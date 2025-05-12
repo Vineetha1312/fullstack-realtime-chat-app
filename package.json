@@ -3,10 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-     "prebuild": "rm -rf backend/node_modules frontend/node_modules backend/package-lock.json frontend/package-lock.json",
-    "build": "npm ci --prefix backend && npm ci --prefix frontend && npm audit fix --prefix frontend && npm run build --prefix frontend",
-    "start": "npm run start --prefix backend",
-    "render-build": "chmod +x render-build.sh && ./render-build.sh"
+    "build" : "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start" : "npm run start --prefix backend"
   },
   "keywords": [],
   "author": "",
