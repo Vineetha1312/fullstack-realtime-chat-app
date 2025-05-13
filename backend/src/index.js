@@ -32,13 +32,39 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Static files in production
+// Update your static file serving section like this:
 if (process.env.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "../frontend/dist"); // Corrected path
-  app.use(express.static(frontendPath));
+  // Try multiple possible paths for the frontend dist
+  const possiblePaths = [
+    path.join(__dirname, "../frontend/dist"),       // Local development structure
+    path.join(__dirname, "../../frontend/dist"),    // Possible Render.com structure
+    path.join(__dirname, "frontend/dist"),          // Alternative structure
+    path.join(__dirname, "dist")                    // If files are copied here
+  ];
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
-  });
+  let frontendPath = null;
+  for (const possiblePath of possiblePaths) {
+    if (fs.existsSync(possiblePath)) {
+      frontendPath = possiblePath;
+      break;
+    }
+  }
+
+  if (!frontendPath) {
+    console.error("Could not find frontend dist directory!");
+    // List all paths that were tried
+    console.log("Tried paths:", possiblePaths);
+    // Try to list the current directory contents
+    console.log("Current __dirname contents:", fs.readdirSync(__dirname));
+    console.log("Parent directory contents:", fs.readdirSync(path.join(__dirname, "..")));
+  } else {
+    console.log("Serving static files from:", frontendPath);
+    app.use(express.static(frontendPath));
+    
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(frontendPath, "index.html"));
+    });
+  }
 }
 
 server.listen(PORT, () => {
