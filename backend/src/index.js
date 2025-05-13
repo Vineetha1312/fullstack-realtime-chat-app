@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from 'url';
+import fs from 'fs'; // Add this import
 
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
@@ -32,38 +33,32 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Static files in production
-// Update your static file serving section like this:
 if (process.env.NODE_ENV === "production") {
   // Try multiple possible paths for the frontend dist
   const possiblePaths = [
-    path.join(__dirname, "../frontend/dist"),       // Local development structure
-    path.join(__dirname, "../../frontend/dist"),    // Possible Render.com structure
-    path.join(__dirname, "frontend/dist"),          // Alternative structure
-    path.join(__dirname, "dist")                    // If files are copied here
+    path.join(__dirname, "../../frontend/dist"),  // Render.com structure
+    path.join(__dirname, "../frontend/dist"),    // Local development
+    path.join(__dirname, "dist")                 // Alternative
   ];
 
-  let frontendPath = null;
-  for (const possiblePath of possiblePaths) {
-    if (fs.existsSync(possiblePath)) {
-      frontendPath = possiblePath;
-      break;
+  let frontendPath = possiblePaths.find(p => {
+    try {
+      return fs.existsSync(path.join(p, "index.html"));
+    } catch {
+      return false;
     }
-  }
+  });
 
-  if (!frontendPath) {
-    console.error("Could not find frontend dist directory!");
-    // List all paths that were tried
-    console.log("Tried paths:", possiblePaths);
-    // Try to list the current directory contents
-    console.log("Current __dirname contents:", fs.readdirSync(__dirname));
-    console.log("Parent directory contents:", fs.readdirSync(path.join(__dirname, "..")));
-  } else {
+  if (frontendPath) {
     console.log("Serving static files from:", frontendPath);
     app.use(express.static(frontendPath));
     
     app.get("*", (req, res) => {
       res.sendFile(path.join(frontendPath, "index.html"));
     });
+  } else {
+    console.error("Could not find frontend dist directory!");
+    console.log("Tried paths:", possiblePaths);
   }
 }
 
